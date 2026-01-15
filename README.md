@@ -97,4 +97,10 @@ Benchmarks running on Apple M4 (Single Core):
 
 ## 📜 License
 
-This project is open-source and available under the MIT License.
+zlib – do whatever you want, just don't forget to give credit 😉
+
+---
+
+## ✍️ Author
+
+Made with ❤️ by Vincent Huster
