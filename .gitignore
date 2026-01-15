@@ -1,0 +1,21 @@
+# Binaries
+*.o
+*.a
+*.exe
+*.dSYM/
+
+# Build artifacts
+build/
+lib/libarlecs.a
+tests/test_runner
+tests/arlecs_tests
+tests/arlecs_bench
+bench_runner
+bin/bench
+
+# OS specific
+.DS_Store
+.vscode/
+
+# Other
+doc.md
