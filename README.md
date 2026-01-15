@@ -1,7 +1,7 @@
 # ⚡️ ArlECS
 
 ![Language](https://img.shields.io/badge/language-C99-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+![License](https://img.shields.io/badge/license-zlib-green.svg)
 ![Performance](https://img.shields.io/badge/performance-High-red.svg)
 
 **ArlECS** is a high-performance, ultra-lightweight Entity Component System (ECS) engine written in pure C99.
