@@ -25,9 +25,9 @@ enum { C_POS, C_VEL, C_LIFE, C_HEAVY, C_MASS };
 uint64_t bench_creation(void) {
     Armel arena;
     arl_new(&arena, MEMORY_SIZE);
-    ArlEcsWorld* world = arlecs_world_create(&arena);
+    ArlEcsWorld* world = arlecs_world_create(&arena, ENTITY_COUNT);
     
-    arlecs_component_new(world, C_POS, Position, ENTITY_COUNT);
+    arlecs_component_new(world, C_POS, Position);
 
     uint64_t start = arl_now_ns();
 
@@ -49,8 +49,8 @@ uint64_t bench_iterate_single(void) {
     // A. Setup (Hors chrono)
     Armel arena;
     arl_new(&arena, MEMORY_SIZE);
-    ArlEcsWorld* world = arlecs_world_create(&arena);
-    arlecs_component_new(world, C_POS, Position, ENTITY_COUNT);
+    ArlEcsWorld* world = arlecs_world_create(&arena, ENTITY_COUNT);
+    arlecs_component_new(world, C_POS, Position);
 
     for (int i = 0; i < ENTITY_COUNT; i++) {
         ArlEntity e = arlecs_create_entity(world);
@@ -84,9 +84,9 @@ uint64_t bench_iterate_single(void) {
 uint64_t bench_iterate_physics(void) {
     Armel arena;
     arl_new(&arena, MEMORY_SIZE);
-    ArlEcsWorld* world = arlecs_world_create(&arena);
-    arlecs_component_new(world, C_POS, Position, ENTITY_COUNT);
-    arlecs_component_new(world, C_VEL, Velocity, ENTITY_COUNT);
+    ArlEcsWorld* world = arlecs_world_create(&arena, ENTITY_COUNT);
+    arlecs_component_new(world, C_POS, Position);
+    arlecs_component_new(world, C_VEL, Velocity);
 
     for (int i = 0; i < ENTITY_COUNT; i++) {
         ArlEntity e = arlecs_create_entity(world);
@@ -119,10 +119,10 @@ uint64_t bench_iterate_physics(void) {
 uint64_t bench_iterate_sparse(void) {
     Armel arena;
     arl_new(&arena, MEMORY_SIZE);
-    ArlEcsWorld* world = arlecs_world_create(&arena);
+    ArlEcsWorld* world = arlecs_world_create(&arena, ENTITY_COUNT);
     
-    arlecs_component_new(world, C_POS, Position, ENTITY_COUNT);
-    arlecs_component_new(world, C_VEL, Velocity, ENTITY_COUNT);
+    arlecs_component_new(world, C_POS, Position);
+    arlecs_component_new(world, C_VEL, Velocity);
 
     for (int i = 0; i < ENTITY_COUNT; i++) {
         ArlEntity e = arlecs_create_entity(world);
@@ -230,13 +230,13 @@ uint64_t run_game_loop_bench(void) {
 
     Armel arena;
     arl_new(&arena, MEMORY_SIZE);
-    ArlEcsWorld* world = arlecs_world_create(&arena);
+    ArlEcsWorld* world = arlecs_world_create(&arena, ENTITY_COUNT);
 
     // Register
-    arlecs_component_new(world, C_POS, Position, ENTITY_COUNT);
-    arlecs_component_new(world, C_VEL, Velocity, ENTITY_COUNT);
-    arlecs_component_new(world, C_LIFE, Life, ENTITY_COUNT);
-    arlecs_component_new(world, C_MASS, Mass, ENTITY_COUNT);
+    arlecs_component_new(world, C_POS, Position);
+    arlecs_component_new(world, C_VEL, Velocity);
+    arlecs_component_new(world, C_LIFE, Life);
+    arlecs_component_new(world, C_MASS, Mass);
 
     // Populate
     printf("    ... Spawning %d stars ...\n", ENTITY_COUNT);

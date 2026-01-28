@@ -1,11 +1,12 @@
 #include <ArmelECS/arlecs.h>
 
 
-ArlEcsWorld* arlecs_world_create(Armel* armel) {
+ArlEcsWorld* arlecs_world_create(Armel* armel, uint32_t max_entities) {
 	ArlEcsWorld* w = arl_make(armel, ArlEcsWorld);
 
 	w->arena = armel;
 	w->entity_counter = 0;
+	w->max_entities = max_entities;
 
 	for (int i = 0; i < ARLECS_MAX_COMPONENT_TYPES; i++) {
 		w->pools[i] = NULL;
@@ -20,11 +21,11 @@ ArlEntity arlecs_create_entity(ArlEcsWorld* world) {
 }
 
 
-void arlecs_register_component(ArlEcsWorld* world, uint32_t component_id, size_t size, uint32_t max_entities) {
+void arlecs_register_component(ArlEcsWorld* world, uint32_t component_id, size_t size) {
 	assert(component_id < ARLECS_MAX_COMPONENT_TYPES && "ArlECS Error: Component ID out of bounds");
 	assert(world->pools[component_id] == NULL && "ArlECS Error: Component already in use");
 
-	world->pools[component_id] = arlecs_pool_new(world->arena, size, max_entities);
+	world->pools[component_id] = arlecs_pool_new(world->arena, size, world->max_entities);
 }
 
 

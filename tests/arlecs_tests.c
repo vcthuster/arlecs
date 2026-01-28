@@ -137,7 +137,7 @@ ARMEL_TEST(test_world_lifecycle) {
 	Armel arena;
 	arl_new(&arena, 1024 * 1024); // 1 MB
 
-	ArlEcsWorld* world = arlecs_world_create(&arena);
+	ArlEcsWorld* world = arlecs_world_create(&arena, 100);
 	assert(world != NULL);
 	assert(world->entity_counter == 0);
 
@@ -155,11 +155,11 @@ ARMEL_TEST(test_world_lifecycle) {
 ARMEL_TEST(test_components_data) {
 	Armel arena;
 	arl_new(&arena, 1024 * 1024);
-	ArlEcsWorld* world = arlecs_world_create(&arena);
+	ArlEcsWorld* world = arlecs_world_create(&arena, 100);
 
 	// Enregistrement
-	arlecs_component_new(world, C_POS, Pos, 100);
-	arlecs_component_new(world, C_HP, Health, 100);
+	arlecs_component_new(world, C_POS, Pos);
+	arlecs_component_new(world, C_HP, Health);
 
 	ArlEntity player = arlecs_create_entity(world);
 
@@ -184,12 +184,12 @@ ARMEL_TEST(test_components_data) {
 ARMEL_TEST(test_view_filtering) {
 	Armel arena;
 	arl_new(&arena, 1024 * 1024);
-	ArlEcsWorld* world = arlecs_world_create(&arena);
+	ArlEcsWorld* world = arlecs_world_create(&arena, 100);
 
 	// Setup: Pos, Vel, HP
-	arlecs_component_new(world, C_POS, Pos, 100);
-	arlecs_component_new(world, C_VEL, Vel, 100);
-	arlecs_component_new(world, C_HP, Health, 100);
+	arlecs_component_new(world, C_POS, Pos);
+	arlecs_component_new(world, C_VEL, Vel);
+	arlecs_component_new(world, C_HP, Health);
 
 	// Création de 3 entités avec des archétypes différents
 	
@@ -233,10 +233,10 @@ ARMEL_TEST(test_view_removal_safety) {
 	// Ce test vérifie si supprimer un composant rend la vue invalide (ce qui est bien)
 	Armel arena;
 	arl_new(&arena, 1024 * 1024);
-	ArlEcsWorld* world = arlecs_world_create(&arena);
+	ArlEcsWorld* world = arlecs_world_create(&arena, 10);
 
-	arlecs_component_new(world, C_POS, Pos, 10);
-	arlecs_component_new(world, C_VEL, Vel, 10);
+	arlecs_component_new(world, C_POS, Pos);
+	arlecs_component_new(world, C_VEL, Vel);
 
 	ArlEntity e = arlecs_create_entity(world);
 	arlecs_add_component(world, e, C_POS);

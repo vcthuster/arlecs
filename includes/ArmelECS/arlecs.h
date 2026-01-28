@@ -20,6 +20,7 @@ typedef struct {
 	Armel* arena; ///< Pointer to the memory arena used for allocations.
 
 	uint32_t entity_counter; ///< The next available entity ID.
+	uint32_t max_entities; ///< Maximum entities in the instance
 	
 	// Recyclage des IDs (Optionnel pour la v1, mais à prévoir)
 	// On utilisera un tableau dynamique pour stocker les IDs des entités mortes
@@ -38,7 +39,7 @@ typedef struct {
  * @param armel Pointer to an initialized Armel arena.
  * @return A pointer to the created World.
  */
-ArlEcsWorld* arlecs_world_create(Armel* armel);
+ArlEcsWorld* arlecs_world_create(Armel* armel, uint32_t max_entities);
 
 /**
  * @brief Creates a new entity.
@@ -51,16 +52,15 @@ ArlEntity arlecs_create_entity(ArlEcsWorld* world);
  * Use the macro arlecs_component_new() instead for type safety.
  * @param component_id The unique ID (enum) for this component type.
  * @param size The size of the struct in bytes.
- * @param max_entities The capacity of the pool (cannot be resized).
  */
-void arlecs_register_component(ArlEcsWorld* world, uint32_t component_id, size_t size, uint32_t max_entities);
+void arlecs_register_component(ArlEcsWorld* world, uint32_t component_id, size_t size);
 
 /**
  * @brief Helper macro to register a component safely.
  * Usage: arlecs_component_new(world, COMP_POS, Position, 1000);
  */
-#define arlecs_component_new(WORLD,ID,TYPE,NB) \
-	arlecs_register_component(WORLD, ID, sizeof(TYPE), NB);
+#define arlecs_component_new(WORLD,ID,TYPE) \
+	arlecs_register_component(WORLD, ID, sizeof(TYPE));
 
 /**
  * @brief Adds a component to an entity.
