@@ -91,4 +91,13 @@ static inline bool arlecs_pool_has(ArlPool* pool, ArlEntity entity) {
 	return index < pool->count && pool->dense[index] == entity;
 }
 
+/**
+ * @brief Clears a pool, its sparse array contains now only 0
+ * @param pool 
+ */
+void arlecs_pool_clear (ArlPool* pool) {
+	pool->count = 0;
+	memset(pool->sparse, 0xFF, pool->capacity * sizeof(uint32_t));
+}
+
 #endif
