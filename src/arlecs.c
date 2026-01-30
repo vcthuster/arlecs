@@ -7,6 +7,7 @@ ArlEcsWorld* arlecs_world_create(Armel* armel, uint32_t max_entities) {
 	w->arena = armel;
 	w->entity_counter = 0;
 	w->max_entities = max_entities;
+	w->component_counter = 0;
 
 	for (int i = 0; i < ARLECS_MAX_COMPONENT_TYPES; i++) {
 		w->pools[i] = NULL;
@@ -21,11 +22,15 @@ ArlEntity arlecs_create_entity(ArlEcsWorld* world) {
 }
 
 
-void arlecs_register_component(ArlEcsWorld* world, uint32_t component_id, size_t size) {
-	assert(component_id < ARLECS_MAX_COMPONENT_TYPES && "ArlECS Error: Component ID out of bounds");
-	assert(world->pools[component_id] == NULL && "ArlECS Error: Component already in use");
+uint32_t arlecs_register_component(ArlEcsWorld* world, size_t size) {
+	assert(world->component_counter < ARLECS_MAX_COMPONENT_TYPES && "ArlECS Error: Component ID out of bounds");
 
-	world->pools[component_id] = arlecs_pool_new(world->arena, size, world->max_entities);
+	uint32_t new_id = world->component_counter;
+
+	world->pools[new_id] = arlecs_pool_new(world->arena, size, world->max_entities);
+	world->component_counter++;
+
+	return new_id;
 }
 
 

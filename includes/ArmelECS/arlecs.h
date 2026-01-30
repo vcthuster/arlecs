@@ -29,6 +29,8 @@ typedef struct {
 
 	ArlPool* pools[ARLECS_MAX_COMPONENT_TYPES]; ///< Sparse sets for each component type.
 
+	uint32_t component_counter;
+
 } ArlEcsWorld;
 
 
@@ -50,14 +52,16 @@ ArlEntity arlecs_create_entity(ArlEcsWorld* world);
 /**
  * @brief Registers a component type in the world.
  * Use the macro arlecs_component_new() instead for type safety.
- * @param component_id The unique ID (enum) for this component type.
  * @param size The size of the struct in bytes.
  */
-void arlecs_register_component(ArlEcsWorld* world, uint32_t component_id, size_t size);
+uint32_t arlecs_register_component(ArlEcsWorld* world, size_t size);
 
 /**
  * @brief Helper macro to register a component safely.
- * Usage: arlecs_component_new(world, COMP_POS, Position, 1000);
+ * Usage :
+ * extern uint32_t COMP_MYCOMP; // in .h file
+ * uint32_t COMP_MYCOMP = 0; // in .c file
+ * COMP_MYCOMP = arlecs_component_new(world, MyStruct);
  */
 #define arlecs_component_new(WORLD,ID,TYPE) \
 	arlecs_register_component(WORLD, ID, sizeof(TYPE));
