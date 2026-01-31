@@ -8,6 +8,10 @@ typedef struct {
 	int hp;
 } ComponentTest;
 
+uint32_t COMP_POS = 0;
+uint32_t COMP_HEALTH = 0;
+uint32_t COMP_VEL = 0;
+
 // --- TESTS ---
 
 ARMEL_TEST(test_creation) {
@@ -129,8 +133,6 @@ typedef struct { float x, y; } Pos;
 typedef struct { float vx, vy; } Vel;
 typedef struct { int hp; } Health;
 
-enum { C_POS = 0, C_VEL = 1, C_HP = 2 };
-
 // --- TESTS WORLD ---
 
 ARMEL_TEST(test_world_lifecycle) {
@@ -158,25 +160,26 @@ ARMEL_TEST(test_components_data) {
 	ArlEcsWorld* world = arlecs_world_create(&arena, 100);
 
 	// Enregistrement
-	arlecs_component_new(world, C_POS, Pos);
-	arlecs_component_new(world, C_HP, Health);
+	COMP_POS    = arlecs_component_new(world, Pos);
+	COMP_HEALTH = arlecs_component_new(world, Health);
+	COMP_VEL    = arlecs_component_new(world, Vel);
 
 	ArlEntity player = arlecs_create_entity(world);
 
 	// Ajout et écriture
-	Pos* p = arlecs_add_component(world, player, C_POS);
+	Pos* p = arlecs_add_component(world, player, COMP_POS);
 	p->x = 10.0f; p->y = 20.0f;
 
-	Health* h = arlecs_add_component(world, player, C_HP);
+	Health* h = arlecs_add_component(world, player, COMP_HEALTH);
 	h->hp = 100;
 
 	// Relecture
-	Pos* p_read = arlecs_get_component(world, player, C_POS);
+	Pos* p_read = arlecs_get_component(world, player, COMP_POS);
 	assert(p_read == p); // Doit être la même adresse
 	assert(p_read->x == 10.0f);
 
 	// Test non-possession
-	assert(arlecs_get_component(world, player, C_VEL) == NULL); // Pas de Velocity enregistré
+	assert(arlecs_get_component(world, player, COMP_VEL) == NULL); // Pas de Velocity enregistré
 
 	arl_free(&arena);
 }
@@ -187,31 +190,31 @@ ARMEL_TEST(test_view_filtering) {
 	ArlEcsWorld* world = arlecs_world_create(&arena, 100);
 
 	// Setup: Pos, Vel, HP
-	arlecs_component_new(world, C_POS, Pos);
-	arlecs_component_new(world, C_VEL, Vel);
-	arlecs_component_new(world, C_HP, Health);
+	COMP_POS = arlecs_component_new(world, Pos);
+	COMP_VEL = arlecs_component_new(world, Vel);
+	COMP_HEALTH = arlecs_component_new(world, Health);
 
 	// Création de 3 entités avec des archétypes différents
 	
 	// E0: Juste POS
 	ArlEntity e0 = arlecs_create_entity(world);
-	arlecs_add_component(world, e0, C_POS);
+	arlecs_add_component(world, e0, COMP_POS);
 
 	// E1: POS + VEL (Celle qu'on veut trouver !)
 	ArlEntity e1 = arlecs_create_entity(world);
-	arlecs_add_component(world, e1, C_POS);
-	arlecs_add_component(world, e1, C_VEL);
+	arlecs_add_component(world, e1, COMP_POS);
+	arlecs_add_component(world, e1, COMP_VEL);
 
 	// E2: POS + HP
 	ArlEntity e2 = arlecs_create_entity(world);
-	arlecs_add_component(world, e2, C_POS);
-	arlecs_add_component(world, e2, C_HP);
+	arlecs_add_component(world, e2, COMP_POS);
+	arlecs_add_component(world, e2, COMP_HEALTH);
 
 	// TEST DE LA VUE : On cherche [POS + VEL]
 	// Seul E1 devrait matcher.
 	
 	int match_count = 0;
-	ArlView view = arlecs_view(world, 2, C_POS, C_VEL); // 2 composants demandés
+	ArlView view = arlecs_view(world, 2, COMP_POS, COMP_VEL); // 2 composants demandés
 
 	while (arlecs_view_next(&view)) {
 		match_count++;
@@ -235,18 +238,18 @@ ARMEL_TEST(test_view_removal_safety) {
 	arl_new(&arena, 1024 * 1024);
 	ArlEcsWorld* world = arlecs_world_create(&arena, 10);
 
-	arlecs_component_new(world, C_POS, Pos);
-	arlecs_component_new(world, C_VEL, Vel);
+	COMP_POS = arlecs_component_new(world, Pos);
+	COMP_VEL = arlecs_component_new(world, Vel);
 
 	ArlEntity e = arlecs_create_entity(world);
-	arlecs_add_component(world, e, C_POS);
-	arlecs_add_component(world, e, C_VEL);
+	arlecs_add_component(world, e, COMP_POS);
+	arlecs_add_component(world, e, COMP_VEL);
 
 	// On supprime VEL
-	arlecs_remove_component(world, e, C_VEL);
+	arlecs_remove_component(world, e, COMP_VEL);
 
 	// La vue [POS + VEL] ne doit plus rien trouver
-	ArlView view = arlecs_view(world, 2, C_POS, C_VEL);
+	ArlView view = arlecs_view(world, 2, COMP_POS, COMP_VEL);
 	bool found = arlecs_view_next(&view);
 
 	assert(found == false);

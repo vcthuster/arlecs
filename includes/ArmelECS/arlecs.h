@@ -63,8 +63,8 @@ uint32_t arlecs_register_component(ArlEcsWorld* world, size_t size);
  * uint32_t COMP_MYCOMP = 0; // in .c file
  * COMP_MYCOMP = arlecs_component_new(world, MyStruct);
  */
-#define arlecs_component_new(WORLD,ID,TYPE) \
-	arlecs_register_component(WORLD, ID, sizeof(TYPE));
+#define arlecs_component_new(WORLD,TYPE) \
+	arlecs_register_component(WORLD, sizeof(TYPE));
 
 /**
  * @brief Adds a component to an entity.

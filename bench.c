@@ -2,6 +2,7 @@
 #include <Armel/armel.h>
 #include <ArmelECS/arlecs.h>
 #include <ArmelECS/arlecs_view.h>
+#include <ArmelECS/arlecs_system.h>
 #include <Armel/armel_bench.h>
 
 // --- SETUP ---
@@ -16,7 +17,11 @@ typedef struct { int dummy[4]; } HeavyData; // Pour polluer le cache si on l'uti
 typedef struct { float life; float max_life; } Life;
 typedef struct { float density; } Mass; // Juste pour le tag "Étoile Lourde"
 
-enum { C_POS, C_VEL, C_LIFE, C_HEAVY, C_MASS };
+uint32_t C_POS = 0;
+uint32_t C_VEL = 0;
+uint32_t C_LIFE = 0;
+uint32_t C_HEAVY = 0;
+uint32_t C_MASS = 0;
 
 // --- FONCTIONS DE BENCHMARK ---
 
@@ -27,7 +32,7 @@ uint64_t bench_creation(void) {
     arl_new(&arena, MEMORY_SIZE);
     ArlEcsWorld* world = arlecs_world_create(&arena, ENTITY_COUNT);
     
-    arlecs_component_new(world, C_POS, Position);
+    C_POS = arlecs_component_new(world, Position);
 
     uint64_t start = arl_now_ns();
 
@@ -50,7 +55,7 @@ uint64_t bench_iterate_single(void) {
     Armel arena;
     arl_new(&arena, MEMORY_SIZE);
     ArlEcsWorld* world = arlecs_world_create(&arena, ENTITY_COUNT);
-    arlecs_component_new(world, C_POS, Position);
+    C_POS = arlecs_component_new(world, Position);
 
     for (int i = 0; i < ENTITY_COUNT; i++) {
         ArlEntity e = arlecs_create_entity(world);
@@ -85,8 +90,8 @@ uint64_t bench_iterate_physics(void) {
     Armel arena;
     arl_new(&arena, MEMORY_SIZE);
     ArlEcsWorld* world = arlecs_world_create(&arena, ENTITY_COUNT);
-    arlecs_component_new(world, C_POS, Position);
-    arlecs_component_new(world, C_VEL, Velocity);
+    C_POS = arlecs_component_new(world, Position);
+    C_VEL = arlecs_component_new(world, Velocity);
 
     for (int i = 0; i < ENTITY_COUNT; i++) {
         ArlEntity e = arlecs_create_entity(world);
@@ -121,8 +126,8 @@ uint64_t bench_iterate_sparse(void) {
     arl_new(&arena, MEMORY_SIZE);
     ArlEcsWorld* world = arlecs_world_create(&arena, ENTITY_COUNT);
     
-    arlecs_component_new(world, C_POS, Position);
-    arlecs_component_new(world, C_VEL, Velocity);
+    C_POS = arlecs_component_new(world, Position);
+    C_VEL = arlecs_component_new(world, Velocity);
 
     for (int i = 0; i < ENTITY_COUNT; i++) {
         ArlEntity e = arlecs_create_entity(world);
@@ -160,9 +165,15 @@ uint64_t bench_iterate_sparse(void) {
 
 // --- BENCHMARK : STELLAR COLLAPSE // 
 
+typedef struct {
+    float dt;
+} SolarBenchCtx;
+
 // 1. Système Gravité : N'affecte QUE les objets ayant une MASSE (10%)
 // Tire les étoiles lourdes vers le centre (0,0)
-static inline void sys_gravity(ArlEcsWorld* world, float dt) {
+static inline void sys_gravity(ArlEcsWorld* world, void* ctx) {
+    SolarBenchCtx* b = (SolarBenchCtx*)ctx;
+
     // Vue sur 3 composants : Mass, Vel, Pos
     // On met MASS en premier car c'est le plus rare (100k vs 1M) -> Optimisation cruciale
     ArlView v = arlecs_view(world, 3, C_MASS, C_VEL, C_POS);
@@ -176,22 +187,23 @@ static inline void sys_gravity(ArlEcsWorld* world, float dt) {
         float dist_sq = (pos->x * pos->x) + (pos->y * pos->y);
         if (dist_sq > 1.0f) {
             float force = 100.0f / dist_sq; 
-            vel->vx -= pos->x * force * dt;
-            vel->vy -= pos->y * force * dt;
+            vel->vx -= pos->x * force * b->dt;
+            vel->vy -= pos->y * force * b->dt;
         }
     }
 }
 
 // 2. Système Cinématique : Tout le monde bouge
-static inline void sys_kinematics(ArlEcsWorld* world, float dt) {
+static inline void sys_kinematics(ArlEcsWorld* world, void* ctx) {
+    SolarBenchCtx* b = (SolarBenchCtx*)ctx;
     ArlView v = arlecs_view(world, 2, C_VEL, C_POS);
 
     while (arlecs_view_next(&v)) {
         Velocity* vel = (Velocity*)v.components[0];
         Position* pos = (Position*)v.components[1];
 
-        pos->x += vel->vx * dt;
-        pos->y += vel->vy * dt;
+        pos->x += vel->vx * b->dt;
+        pos->y += vel->vy * b->dt;
 
         // Amortissement (Friction de l'espace)
         vel->vx *= 0.99f;
@@ -200,14 +212,15 @@ static inline void sys_kinematics(ArlEcsWorld* world, float dt) {
 }
 
 // 3. Système de Vie : Vieillissement et Respawn
-static inline void sys_life_cycle(ArlEcsWorld* world, float dt) {
+static inline void sys_life_cycle(ArlEcsWorld* world, void* ctx) {
+    SolarBenchCtx* b = (SolarBenchCtx*)ctx;
     // On a besoin de POS et VEL pour resetter l'étoile si elle meurt
     ArlView v = arlecs_view(world, 3, C_LIFE, C_POS, C_VEL);
 
     while (arlecs_view_next(&v)) {
         Life* l = (Life*)v.components[0];
         
-        l->life -= dt;
+        l->life -= b->dt;
 
         if (l->life <= 0) {
             // REBIRTH ! (Reset des composants)
@@ -233,10 +246,10 @@ uint64_t run_game_loop_bench(void) {
     ArlEcsWorld* world = arlecs_world_create(&arena, ENTITY_COUNT);
 
     // Register
-    arlecs_component_new(world, C_POS, Position);
-    arlecs_component_new(world, C_VEL, Velocity);
-    arlecs_component_new(world, C_LIFE, Life);
-    arlecs_component_new(world, C_MASS, Mass);
+    C_POS  = arlecs_component_new(world, Position);
+    C_VEL  = arlecs_component_new(world, Velocity);
+    C_LIFE = arlecs_component_new(world, Life);
+    C_MASS = arlecs_component_new(world, Mass);
 
     // Populate
     printf("    ... Spawning %d stars ...\n", ENTITY_COUNT);
@@ -260,17 +273,22 @@ uint64_t run_game_loop_bench(void) {
         }
     }
 
+    printf("    ... Registering systems ...\n");
+    ArlSystemManager sysmgr;
+    
+    arlecs_sys_init(&sysmgr);
+    arlecs_sys_register(&sysmgr, "Gravity", ARL_PHASE_UPDATE, sys_gravity); // 1. Appliquer les forces (Sparse)
+    arlecs_sys_register(&sysmgr, "Kinematics", ARL_PHASE_UPDATE, sys_kinematics); // 2. Intégrer le mouvement (Dense)
+    arlecs_sys_register(&sysmgr, "Life Cycle", ARL_PHASE_UPDATE, sys_life_cycle); // 3. Gérer la logique de jeu (Branching)
+
     printf("    ... Running Simulation (1 Frame logic) ...\n");
 
     uint64_t start = arl_now_ns();
 
     // Simulation d'une frame à dt = 0.016 (60 FPS)
-    float dt = 0.016f;
+    SolarBenchCtx ctx = { .dt = 0.016f };
 
-    // L'ordre des systèmes compte !
-    sys_gravity(world, dt);    // 1. Appliquer les forces (Sparse)
-    sys_kinematics(world, dt); // 2. Intégrer le mouvement (Dense)
-    sys_life_cycle(world, dt); // 3. Gérer la logique de jeu (Branching)
+    arlecs_sys_run_phase(&sysmgr, world, ARL_PHASE_UPDATE, &ctx);
 
     uint64_t end = arl_now_ns();
 
